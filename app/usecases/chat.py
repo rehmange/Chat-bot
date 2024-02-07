@@ -6,11 +6,9 @@ from typing import Literal
 
 from bedrock import _create_body, get_model_id, invoke
 # from app.config import SEARCH_CONFIG
-# from app.repositories.conversation import (
-#     RecordNotFoundError,
-#     find_conversation_by_id,
-#     store_conversation,
-# )
+from app.repositories.conversation import (
+    store_conversation,
+)
 # from app.repositories.custom_bot import find_alias_by_id, store_alias
 from repositories.model import (
     BotAliasModel,
@@ -56,7 +54,7 @@ def prepare_conversation(user_id: str, chat_input: ChatInput) -> tuple[str, Conv
                 role="system",
                 content=ContentModel(
                     content_type="text",
-                    body="",
+                    body="hey",
                 ),
                 model=chat_input.message.model,
                 # model="claude-v2:1",
@@ -267,18 +265,19 @@ def chat(user_id: str, chat_input: ChatInput) -> ChatOutput:
 
     reply_txt = invoke(prompt=prompt, model=chat_input.message.model)
     
-    return reply_txt
+    # return reply_txt
+
     # # Issue id for new assistant message
     # assistant_msg_id = str(ULID())
     # # Append bedrock output to the existing conversation
-    # message = MessageModel(
-    #     role="assistant",
-    #     content=ContentModel(content_type="text", body=reply_txt),
-    #     model=chat_input.message.model,
-    #     children=[],
-    #     parent=user_msg_id,
-    #     create_time=get_current_time(),
-    # )
+    message = MessageModel(
+        role="assistant",
+        content=ContentModel(content_type="text", body=reply_txt),
+        model=chat_input.message.model,
+        children=[],
+        parent=user_msg_id,
+        create_time=get_current_time(),
+    )
     # conversation.message_map[assistant_msg_id] = message
 
     # # Append children to parent
@@ -286,72 +285,72 @@ def chat(user_id: str, chat_input: ChatInput) -> ChatOutput:
     # conversation.last_message_id = assistant_msg_id
 
     # # Store updated conversation
-    # store_conversation(user_id, conversation)
+    store_conversation(user_id, conversation)
     # # Update bot last used time
     # if chat_input.bot_id:
     #     logger.info("Bot id is provided. Updating bot last used time.")
     #     # Update bot last used time
     #     modify_bot_last_used_time(user_id, chat_input.bot_id)
 
-    # output = ChatOutput(
-    #     conversation_id=conversation.id,
-    #     create_time=conversation.create_time,
-    #     message=MessageOutput(
-    #         role=message.role,
-    #         content=Content(
-    #             content_type=message.content.content_type,
-    #             body=message.content.body,
-    #         ),
-    #         model=message.model,
-    #         children=message.children,
-    #         parent=message.parent,
-    #     ),
-    #     bot_id=conversation.bot_id,
-    # )
-
-    # return output
-
-
-def propose_conversation_title(
-    user_id: str,
-    conversation_id: str,
-    model: Literal["claude-instant-v1", "claude-v2"] = "claude-instant-v1",
-) -> str:
-    PROMPT = """Reading the conversation above, what is the appropriate title for the conversation? When answering the title, please follow the rules below:
-<rules>
-- Title must be in the same language as the conversation.
-- Title length must be from 15 to 20 characters.
-- Prefer more specific title than general. Your title should always be distinct from others.
-- Return the conversation title only. DO NOT include any strings other than the title.
-</rules>
-"""
-
-    # Fetch existing conversation
-    conversation = find_conversation_by_id(user_id, conversation_id)
-    messages = trace_to_root(
-        node_id=conversation.last_message_id,
-        message_map=conversation.message_map,
-    )
-
-    # Append message to generate title
-    new_message = MessageModel(
-        role="user",
-        content=ContentModel(
-            content_type="text",
-            body=PROMPT,
+    output = ChatOutput(
+        conversation_id=conversation.id,
+        create_time=conversation.create_time,
+        message=MessageOutput(
+            role=message.role,
+            content=Content(
+                content_type=message.content.content_type,
+                body=message.content.body,
+            ),
+            model=message.model,
+            children=message.children,
+            parent=message.parent,
         ),
-        model=model,
-        children=[],
-        parent=conversation.last_message_id,
-        create_time=get_current_time(),
+        bot_id=conversation.bot_id,
     )
-    messages.append(new_message)
 
-    # Invoke Bedrock
-    prompt = get_buffer_string(messages)
-    reply_txt = invoke(prompt=prompt, model=model)
-    reply_txt = reply_txt.replace("\n", "")
-    return reply_txt
+    return output
+
+
+# def propose_conversation_title(
+#     user_id: str,
+#     conversation_id: str,
+#     model: Literal["claude-instant-v1", "claude-v2:1"] = "claude-instant-v1",
+# ) -> str:
+#     PROMPT = """Reading the conversation above, what is the appropriate title for the conversation? When answering the title, please follow the rules below:
+# <rules>
+# - Title must be in the same language as the conversation.
+# - Title length must be from 15 to 20 characters.
+# - Prefer more specific title than general. Your title should always be distinct from others.
+# - Return the conversation title only. DO NOT include any strings other than the title.
+# </rules>
+# """
+#
+#     # Fetch existing conversation
+#     conversation = find_conversation_by_id(user_id, conversation_id)
+#     messages = trace_to_root(
+#         node_id=conversation.last_message_id,
+#         message_map=conversation.message_map,
+#     )
+#
+#     # Append message to generate title
+#     new_message = MessageModel(
+#         role="user",
+#         content=ContentModel(
+#             content_type="text",
+#             body=PROMPT,
+#         ),
+#         model=model,
+#         children=[],
+#         parent=conversation.last_message_id,
+#         create_time=get_current_time(),
+#     )
+#     messages.append(new_message)
+#
+#     # Invoke Bedrock
+#     prompt = get_buffer_string(messages)
+#     reply_txt = invoke(prompt=prompt, model=model)
+#     reply_txt = reply_txt.replace("\n", "")
+#     return reply_txt
 
 
 # def fetch_conversation(user_id: str, conversation_id: str) -> Conversation:
