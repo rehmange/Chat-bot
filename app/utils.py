@@ -34,6 +34,8 @@ def get_buffer_string(conversations: list[MessageModel]) -> str:
         message = f"{prefix}{conversation.content.body}"
         string_messages.append(message)
 
+    print("conversations", conversations)
+
     if conversations[-1].role == "user":
         # Insert instruction before last human message
         if instruction:
@@ -44,6 +46,7 @@ def get_buffer_string(conversations: list[MessageModel]) -> str:
         # Ref: https://docs.anthropic.com/claude/docs/introduction-to-prompt-design#human--assistant-formatting
         string_messages.append("Assistant: ")
 
+    print("ccc", "\n\n".join(string_messages))
     return "\n\n".join(string_messages)
 
 

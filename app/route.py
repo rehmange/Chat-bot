@@ -25,9 +25,11 @@ from route_schema import (
 
 from usecases.chat import chat
 
+from usecases.bot import (
+    create_new_bot
+)
+
 router = APIRouter()
-
-
 
 
 @router.get("/")
@@ -39,22 +41,15 @@ def read_root():
 def post_message(request: Request, chat_input: ChatInput):
     """Send chat message"""
     # return {"message": chat_input}
-    current_user: User = 1
+    # current_user: User = {"id": '1', "name": 'chaudhary'}
 
-    chat_input = {
-        "conversation_id": "1",
-        "message": {
-            "role": "system",
-            "content": {
-                    "content_type": "text",
-                    "body": "hey",
-                    },
-            "model": "claude-v2:1",
-            "parent_message_id":None
-    },
-        "bot_id":"5"
-        }
-    
-    output = chat(user_id=current_user.id, chat_input=chat_input)
-    print(output,"output")
+    output = chat(user_id='1', chat_input=chat_input)
+    print(output, "output")
     return output
+
+@router.post("/bot", response_model=BotOutput)
+def post_bot(request: Request, bot_input: BotInput):
+    """Create new private owned bot."""
+    # current_user: User = request.state.current_user
+
+    return create_new_bot('1', bot_input)
